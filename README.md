@@ -7,9 +7,9 @@
 
 | Exercise | Category | Current TM | Next Weight | Next AMRAP Target |
 | :--- | :--- | :--- | :--- | :--- |
-| Squat | Primary | 153.5 kg | **112.5 kg** | 11 |
+| Squat | Primary | 155.03 kg | **112.5 kg** | 11 |
 | Bench Press | Primary | 107.0 kg | **77.5 kg** | 11 |
-| Sumo Deadlift | Auxiliary | 150.0 kg | **100.0 kg** | 13 |
+| Sumo Deadlift | Auxiliary | 152.25 kg | **102.5 kg** | 13 |
 | OHP | Primary | 50.0 kg | **35.0 kg** | 11 |
 | Dips | Auxiliary | 0.0 kg | **0.0 kg** | 13 |
 | Bulgarian Split Squat | Auxiliary | 60.5 kg | **40.0 kg** | 13 |
