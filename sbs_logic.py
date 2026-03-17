@@ -181,12 +181,25 @@ def sync_with_hevy():
                     ROUTINE_MAP[r_id].append(lift_name)
 
         if lift_name:
-            # Initialize in state if missing
+            # Initialize in state if missing, with a calculated TM
             if lift_name not in state["main_lifts"]:
-                print(f"➕ Adding {lift_name} to tracking state.")
+                print(f"➕ Registering {lift_name} with a calculated Training Max...")
+                new_tm = 100.0 # Default fallback
+                sets = ex.get("sets", [])
+                if sets:
+                    last_set = sets[-1]
+                    weight = last_set.get("weight_kg", 0)
+                    reps = last_set.get("reps", 0)
+                    if weight and reps > 1:
+                        # Brzycki 1RM Formula: Weight / (1.0278 - (0.0278 * Reps))
+                        estimated_1rm = weight / (1.0278 - (0.0278 * reps))
+                        # Set TM to 90% of estimated 1RM
+                        new_tm = round(estimated_1rm * 0.90, 2)
+                        print(f"   -> Calculated starting TM: {new_tm} kg (from {reps} reps at {weight} kg)")
+
                 state["main_lifts"][lift_name] = {
-                    "tm": 100.0, # Default starting point
-                    "target_reps": 12,
+                    "tm": new_tm,
+                    "target_reps": 15, # Default AMRAP for new auxiliary
                     "category": "auxiliary"
                 }
 
