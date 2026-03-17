@@ -22,9 +22,9 @@ EXERCISE_IDS = {
     "Long Pause Bench": "50DFDFAB",
     "Lunges": "6E6EE645",
     "DB OHP": "6AC96645",
-    "Chin-ups": "29083183",  # Chin Up
-    "Pull-ups": "1B2B1E7C",  # Pull Up
-    "Barbell rows": "55E6546F" # Bent Over Row (Barbell)
+    "Chin-ups": "29083183",
+    "Pull-ups": "1B2B1E7C",
+    "Barbell rows": "55E6546F"
 }
 
 def load_state():
@@ -32,107 +32,59 @@ def load_state():
         return json.load(f)
 
 def create_routine(title, exercises_data):
-    """Sends a POST request to Hevy to create a routine."""
-    if not HEVY_API_KEY:
-        print("Error: HEVY_API_KEY not found.")
-        return
-
-    headers = {
-        "api-key": HEVY_API_KEY,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
-
-    payload = {
-        "routine": {
-            "title": title,
-            "folder_id": None,
-            "exercises": exercises_data
-        }
-    }
-
+    if not HEVY_API_KEY: return
+    headers = {"api-key": HEVY_API_KEY, "Content-Type": "application/json", "Accept": "application/json"}
+    payload = {"routine": {"title": title, "folder_id": None, "exercises": exercises_data}}
     try:
         response = requests.post(f"{HEVY_BASE_URL}/routines", headers=headers, json=payload)
-        if response.status_code != 200:
-            print(f"Error {response.status_code}: {response.text}")
         response.raise_for_status()
-        print(f"Successfully created routine: {title}")
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to create routine '{title}': {e}")
+        print(f"Successfully created: {title}")
+    except Exception as e:
+        print(f"Failed {title}: {e}")
 
-def build_exercise_payload(name, state, sets_count=5):
-    """Builds the exercise payload for Hevy with calculated weights for Week 1."""
-    if name not in EXERCISE_IDS:
-        print(f"Warning: ID for {name} not found.")
-        return None
-
+def build_exercise_payload(name, state):
+    if name not in EXERCISE_IDS: return None
     lift_data = state["main_lifts"].get(name)
-    if not lift_data:
-        # For exercises without a TM (like Chin-ups/Pull-ups)
-        return {
-            "exercise_template_id": EXERCISE_IDS[name],
-            "sets": [{"type": "normal", "reps": 10, "weight_kg": 0} for _ in range(sets_count)]
-        }
-
-    # SbS Week 1: Primary 70%, Auxiliary 60%
-    category = lift_data.get("category", "primary")
-    intensity = 0.70 if category == "primary" else 0.60
-    target_reps = 10 if category == "primary" else 14
     
-    # Calculate starting weight (rounded to nearest 2.5kg)
-    weight = round((lift_data["tm"] * intensity) / 2.5) * 2.5
+    # Defaults for non-main lifts
+    if not lift_data:
+        return {"exercise_template_id": EXERCISE_IDS[name], "sets": [{"type": "normal", "reps": 10, "weight_kg": 0} for _ in range(3)]}
 
+    category = lift_data.get("category", "primary")
+    
+    # HYPERTROPHY WEEK 1 LOGIC
+    # Primary: 70% TM | 3 sets of 10 | 1 AMRAP target 12
+    # Auxiliary: 65% TM | 3 sets of 12 | 1 AMRAP target 15
+    if category == "primary":
+        intensity, reps, target = 0.70, 10, 12
+    else:
+        intensity, reps, target = 0.65, 12, 15
+    
+    weight = round((lift_data["tm"] * intensity) / 2.5) * 2.5
+    
     sets = []
-    # 4 Normal Sets
-    for _ in range(sets_count - 1):
-        sets.append({
-            "type": "normal",
-            "reps": 5 if category == "primary" else 7, # Default SbS sets
-            "weight_kg": weight
-        })
-    # 1 Failure (AMRAP) Set
-    sets.append({
-        "type": "failure",
-        "reps": target_reps,
-        "weight_kg": weight
-    })
+    for _ in range(3): # 3 Normal Sets
+        sets.append({"type": "normal", "reps": reps, "weight_kg": weight})
+    sets.append({"type": "failure", "reps": target, "weight_kg": weight}) # 1 AMRAP Set
 
     return {
         "exercise_template_id": EXERCISE_IDS[name],
-        "notes": f"SbS Week 1 | Target: {target_reps} reps",
+        "notes": f"Hypertrophy Week 1 | Target: {target} reps",
         "sets": sets
     }
 
 def main():
     state = load_state()
     
-    # Day 1: Squat, Sumo Deadlift, Dips, Chin-ups
-    day1_exercises = [
-        build_exercise_payload("Squat", state),
-        build_exercise_payload("Sumo Deadlift", state),
-        build_exercise_payload("Dips", state),
-        build_exercise_payload("Chin-ups", state)
+    routines = [
+        ("SbS Hyp Day 1 (W1)", ["Squat", "Sumo Deadlift", "Dips", "Chin-ups"]),
+        ("SbS Hyp Day 2 (W1)", ["Bench Press", "OHP", "Bulgarian Split Squat", "Pull-ups"]),
+        ("SbS Hyp Day 3 (W1)", ["Block Pulls", "Long Pause Bench", "Lunges", "DB OHP", "Barbell rows"])
     ]
-    create_routine("SbS Day 1 (Week 1)", [ex for ex in day1_exercises if ex])
-
-    # Day 2: Bench Press, OHP, Bulgarian Split Squat, Pull-ups
-    day2_exercises = [
-        build_exercise_payload("Bench Press", state),
-        build_exercise_payload("OHP", state),
-        build_exercise_payload("Bulgarian Split Squat", state),
-        build_exercise_payload("Pull-ups", state)
-    ]
-    create_routine("SbS Day 2 (Week 1)", [ex for ex in day2_exercises if ex])
-
-    # Day 3: Block Pulls, Long Pause Bench, Lunges, DB OHP, Barbell rows
-    day3_exercises = [
-        build_exercise_payload("Block Pulls", state),
-        build_exercise_payload("Long Pause Bench", state),
-        build_exercise_payload("Lunges", state),
-        build_exercise_payload("DB OHP", state),
-        build_exercise_payload("Barbell rows", state)
-    ]
-    create_routine("SbS Day 3 (Week 1)", [ex for ex in day3_exercises if ex])
+    
+    for title, ex_names in routines:
+        payload = [build_exercise_payload(n, state) for n in ex_names]
+        create_routine(title, [p for p in payload if p])
 
 if __name__ == "__main__":
     main()
