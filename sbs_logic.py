@@ -28,15 +28,15 @@ LIFT_MAPPING = {
 }
 
 ROUTINE_IDS = {
-    "SbS Hyp Day 1 (W1)": "e85acaee-289e-4b1f-8d6a-532c4eb3138f",
-    "SbS Hyp Day 2 (W1)": "2194411d-866e-4fd0-8596-fa2302b1421c",
-    "SbS Hyp Day 3 (W1)": "a4384cbb-8f1b-4517-bec2-09fdff80efb1"
+    "SbS Hyp Day 1": "e85acaee-289e-4b1f-8d6a-532c4eb3138f",
+    "SbS Hyp Day 2": "2194411d-866e-4fd0-8596-fa2302b1421c",
+    "SbS Hyp Day 3": "a4384cbb-8f1b-4517-bec2-09fdff80efb1"
 }
 
 ROUTINE_EXERCISES = {
-    "SbS Hyp Day 1 (W1)": ["Squat", "Sumo Deadlift", "Dips", "Chin-ups"],
-    "SbS Hyp Day 2 (W1)": ["Bench Press", "OHP", "Bulgarian Split Squat", "Pull-ups"],
-    "SbS Hyp Day 3 (W1)": ["Block Pulls", "Long Pause Bench", "Lunges", "DB OHP", "Barbell rows"]
+    "SbS Hyp Day 1": ["Squat", "Sumo Deadlift", "Dips", "Chin-ups"],
+    "SbS Hyp Day 2": ["Bench Press", "OHP", "Bulgarian Split Squat", "Pull-ups"],
+    "SbS Hyp Day 3": ["Block Pulls", "Long Pause Bench", "Lunges", "DB OHP", "Barbell rows"]
 }
 
 SBS_PROGRAM = {
@@ -74,10 +74,11 @@ def update_hevy_routines(state):
     if not HEVY_API_KEY: return
     headers = {"api-key": HEVY_API_KEY, "Content-Type": "application/json"}
     week = state["current_week"]
-    for title, routine_id in ROUTINE_IDS.items():
-        print(f"Pushing updates to Hevy: {title}...")
+    for base_title, routine_id in ROUTINE_IDS.items():
+        current_title = f"{base_title} (W{week})"
+        print(f"Pushing updates to Hevy: {current_title}...")
         exercises_payload = []
-        for ex_name in ROUTINE_EXERCISES[title]:
+        for ex_name in ROUTINE_EXERCISES[base_title]:
             lift_data = state["main_lifts"].get(ex_name)
             ex_id = next((k for k, v in LIFT_MAPPING.items() if v == ex_name), None)
             if not lift_data:
@@ -86,19 +87,15 @@ def update_hevy_routines(state):
             else:
                 intensity, target = SBS_PROGRAM[lift_data["category"]].get(week, (0, 0))
                 weight = round((lift_data["tm"] * intensity) / 2.5) * 2.5
-                reps = 10 if lift_data["category"] == "primary" else 12
+                reps = 10 if lift_data["category"] == "primary" else 12 # Default Wave 1/2 reps
                 sets = [{"type": "normal", "reps": reps, "weight_kg": weight} for _ in range(3)]
                 sets.append({"type": "failure", "reps": target, "weight_kg": weight})
             exercises_payload.append({"exercise_template_id": ex_id, "notes": f"W{week} Target: {target}", "sets": sets})
-        payload = {"routine": {"title": title, "exercises": exercises_payload}}
         try:
-            r = requests.put(f"{HEVY_BASE_URL}/routines/{routine_id}", headers=headers, json=payload)
-            if r.status_code != 200:
-                print(f"   ❌ Error {r.status_code}: {r.text}")
+            r = requests.put(f"{HEVY_BASE_URL}/routines/{routine_id}", headers=headers, json={"routine": {"title": current_title, "exercises": exercises_payload}})
             r.raise_for_status()
-            print(f"   ✅ Updated {title}")
-        except Exception as e:
-            print(f"   ❌ Failed {title}: {e}")
+            print(f"   ✅ Updated {current_title}")
+        except Exception as e: print(f"   ❌ Error updating {base_title}: {e}")
 
 def get_multiplier(rep_diff):
     if rep_diff <= -2: return 0.95
@@ -112,29 +109,19 @@ def get_multiplier(rep_diff):
 
 def sync_with_hevy():
     print("--- Hevy to SbS Sync ---")
-    if not HEVY_API_KEY:
-        print("❌ Error: HEVY_API_KEY not found.")
-        return
-    
+    if not HEVY_API_KEY: return
     headers = {"api-key": HEVY_API_KEY, "Accept": "application/json"}
     try:
         r = requests.get(f"{HEVY_BASE_URL}/workouts", headers=headers, params={"pageSize": 1})
-        r.raise_for_status()
         workouts = r.json().get("workouts", [])
-        if not workouts:
-            print("ℹ️ No workouts found in Hevy.")
-            return
+        if not workouts: return
         workout = workouts[0]
-    except Exception as e:
-        print(f"❌ API Error: {e}")
-        return
+    except: return
 
     state = load_state()
-    if workout.get("id") in state.get("processed_workouts_this_week", []):
-        print(f"ℹ️ Workout '{workout.get('title')}' already processed. Skipping.")
-        return
+    if workout.get("id") in state.get("processed_workouts_this_week", []): return
 
-    print(f"🔄 Processing: {workout.get('title')} ({workout.get('id')})")
+    print(f"🔄 Processing: {workout.get('title')}")
     found_any = False
     for ex in workout.get("exercises", []):
         lift_name = LIFT_MAPPING.get(ex.get("exercise_template_id"))
@@ -145,25 +132,18 @@ def sync_with_hevy():
             reps = last_set.get("reps", 0)
             target = state["main_lifts"][lift_name]["target_reps"]
             multiplier = get_multiplier(reps - target)
-            old_tm = state["main_lifts"][lift_name]["tm"]
-            state["main_lifts"][lift_name]["tm"] = round(old_tm * multiplier, 2)
-            print(f"   💪 {lift_name}: {reps} reps (Target {target}) -> TM {old_tm} -> {state['main_lifts'][lift_name]['tm']}")
+            state["main_lifts"][lift_name]["tm"] = round(state["main_lifts"][lift_name]["tm"] * multiplier, 2)
 
     if found_any:
         state.setdefault("processed_workouts_this_week", []).append(workout.get("id"))
         if len(state["processed_workouts_this_week"]) >= state.get("workouts_per_week", 3):
-            print("🎊 Week complete! Advancing...")
             state["current_week"] += 1
             state["processed_workouts_this_week"] = []
         save_state(state)
-        print("✅ Sync successful.")
-    else:
-        print("ℹ️ No main lifts found in this workout. It won't count toward your 3-day goal.")
 
 if __name__ == "__main__":
     import sys
     if "--next-week" in sys.argv:
-        print("⏩ Manually advancing to next week...")
         s = load_state()
         s["current_week"] += 1
         s["processed_workouts_this_week"] = []
