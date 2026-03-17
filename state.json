@@ -1,7 +1,9 @@
 {
     "current_week": 2,
     "workouts_per_week": 3,
-    "processed_workouts_this_week": [],
+    "processed_workouts_this_week": [
+        "c92944b1-2d10-4afb-9029-c16f3974f167"
+    ],
     "main_lifts": {
         "Squat": {
             "tm": 153.5,
@@ -9,7 +11,7 @@
             "category": "primary"
         },
         "Bench Press": {
-            "tm": 107.0,
+            "tm": 109.14,
             "target_reps": 8,
             "category": "primary"
         },
