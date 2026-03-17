@@ -39,16 +39,17 @@ ROUTINE_EXERCISES = {
     "SbS Hyp Day 3": ["Block Pulls", "Long Pause Bench", "Lunges", "DB OHP", "Barbell rows"]
 }
 
+# SBS Hypertrophy RTF Program Data: (Intensity, Normal Reps, Target Reps)
 SBS_PROGRAM = {
     "primary": {
-        1: (0.70, 12), 2: (0.725, 11), 3: (0.75, 10), 4: (0.725, 11), 5: (0.75, 10), 6: (0.775, 9), 7: (0.50, 0),
-        8: (0.75, 10), 9: (0.775, 9), 10: (0.80, 8), 11: (0.775, 9), 12: (0.80, 8), 13: (0.825, 7), 14: (0.50, 0),
-        15: (0.80, 8), 16: (0.825, 7), 17: (0.85, 6), 18: (0.825, 7), 19: (0.85, 6), 20: (0.875, 5), 21: (0.50, 0)
+        1: (0.70, 10, 12), 2: (0.725, 9, 11), 3: (0.75, 8, 10), 4: (0.725, 9, 11), 5: (0.75, 8, 10), 6: (0.775, 7, 9), 7: (0.60, 14, 18),
+        8: (0.725, 9, 11), 9: (0.75, 8, 10), 10: (0.775, 7, 9), 11: (0.75, 8, 10), 12: (0.775, 7, 9), 13: (0.80, 6, 8), 14: (0.60, 14, 18),
+        15: (0.75, 8, 10), 16: (0.775, 7, 9), 17: (0.80, 6, 8), 18: (0.775, 7, 9), 19: (0.80, 6, 8), 20: (0.825, 5, 6), 21: (0.60, 14, 18)
     },
     "auxiliary": {
-        1: (0.65, 15), 2: (0.675, 13), 3: (0.70, 12), 4: (0.675, 13), 5: (0.70, 12), 6: (0.725, 11), 7: (0.50, 0),
-        8: (0.70, 12), 9: (0.725, 11), 10: (0.75, 10), 11: (0.725, 11), 12: (0.75, 10), 13: (0.775, 9), 14: (0.50, 0),
-        15: (0.75, 10), 16: (0.775, 9), 17: (0.80, 8), 18: (0.775, 9), 19: (0.80, 8), 20: (0.825, 7), 21: (0.50, 0)
+        1: (0.65, 12, 15), 2: (0.675, 11, 13), 3: (0.70, 10, 12), 4: (0.675, 11, 13), 5: (0.70, 10, 12), 6: (0.725, 9, 11), 7: (0.55, 17, 21),
+        8: (0.675, 11, 13), 9: (0.70, 10, 12), 10: (0.725, 9, 11), 11: (0.70, 10, 12), 12: (0.725, 9, 11), 13: (0.75, 8, 10), 14: (0.55, 17, 21),
+        15: (0.70, 10, 12), 16: (0.725, 9, 11), 17: (0.75, 8, 10), 18: (0.725, 9, 11), 19: (0.75, 8, 10), 20: (0.775, 7, 9), 21: (0.55, 17, 21)
     }
 }
 
@@ -63,11 +64,11 @@ def save_state(state):
 
 def update_readme(state):
     week = state["current_week"]
-    dashboard = f"# Hevy to SbS Sync (Hypertrophy) 🏋️‍♂️💪\n\n## 📅 Week {week} / 21\n\n| Exercise | TM | Next Weight | Target |\n| :--- | :--- | :--- | :--- |\n"
+    dashboard = f"# Hevy to SbS Sync (Hypertrophy) 🏋️‍♂️💪\n\n## 📅 Week {week} / 21\n\n| Exercise | TM | Next Weight | Normal Sets | AMRAP Target |\n| :--- | :--- | :--- | :--- | :--- |\n"
     for name, data in state["main_lifts"].items():
-        intensity, target = SBS_PROGRAM[data.get("category", "primary")].get(week, (0, 0))
+        intensity, norm, target = SBS_PROGRAM[data.get("category", "primary")].get(week, (0, 0, 0))
         weight = round((data["tm"] * intensity) / 2.5) * 2.5
-        dashboard += f"| {name} | {data['tm']} kg | **{weight} kg** | {target} |\n"
+        dashboard += f"| {name} | {data['tm']} kg | **{weight} kg** | 3x{norm} | {target} |\n"
     with open("README.md", "w") as f: f.write(dashboard)
 
 def update_hevy_routines(state):
@@ -83,14 +84,14 @@ def update_hevy_routines(state):
             ex_id = next((k for k, v in LIFT_MAPPING.items() if v == ex_name), None)
             if not lift_data:
                 sets = [{"type": "normal", "reps": 10, "weight_kg": 0} for _ in range(4)]
-                target = 0
+                note = "Accessory"
             else:
-                intensity, target = SBS_PROGRAM[lift_data["category"]].get(week, (0, 0))
+                intensity, norm, target = SBS_PROGRAM[lift_data["category"]].get(week, (0, 0, 0))
                 weight = round((lift_data["tm"] * intensity) / 2.5) * 2.5
-                reps = 10 if lift_data["category"] == "primary" else 12 # Default Wave 1/2 reps
-                sets = [{"type": "normal", "reps": reps, "weight_kg": weight} for _ in range(3)]
+                sets = [{"type": "normal", "reps": norm, "weight_kg": weight} for _ in range(3)]
                 sets.append({"type": "failure", "reps": target, "weight_kg": weight})
-            exercises_payload.append({"exercise_template_id": ex_id, "notes": f"W{week} Target: {target}", "sets": sets})
+                note = f"W{week}: 3x{norm}, 1x{target}+"
+            exercises_payload.append({"exercise_template_id": ex_id, "notes": note, "sets": sets})
         try:
             r = requests.put(f"{HEVY_BASE_URL}/routines/{routine_id}", headers=headers, json={"routine": {"title": current_title, "exercises": exercises_payload}})
             r.raise_for_status()
@@ -113,6 +114,7 @@ def sync_with_hevy():
     headers = {"api-key": HEVY_API_KEY, "Accept": "application/json"}
     try:
         r = requests.get(f"{HEVY_BASE_URL}/workouts", headers=headers, params={"pageSize": 1})
+        r.raise_for_status()
         workouts = r.json().get("workouts", [])
         if not workouts: return
         workout = workouts[0]
@@ -131,14 +133,17 @@ def sync_with_hevy():
             last_set = next((s for s in reversed(sets) if s.get("type") == "failure"), sets[-1])
             reps = last_set.get("reps", 0)
             target = state["main_lifts"][lift_name]["target_reps"]
-            multiplier = get_multiplier(reps - target)
-            state["main_lifts"][lift_name]["tm"] = round(state["main_lifts"][lift_name]["tm"] * multiplier, 2)
+            state["main_lifts"][lift_name]["tm"] = round(state["main_lifts"][lift_name]["tm"] * get_multiplier(reps - target), 2)
 
     if found_any:
         state.setdefault("processed_workouts_this_week", []).append(workout.get("id"))
         if len(state["processed_workouts_this_week"]) >= state.get("workouts_per_week", 3):
             state["current_week"] += 1
             state["processed_workouts_this_week"] = []
+            # Update target_reps field in state for the new week
+            for lift, data in state["main_lifts"].items():
+                _, _, next_target = SBS_PROGRAM[data["category"]].get(state["current_week"], (0,0,0))
+                state["main_lifts"][lift]["target_reps"] = next_target
         save_state(state)
 
 if __name__ == "__main__":
@@ -147,6 +152,9 @@ if __name__ == "__main__":
         s = load_state()
         s["current_week"] += 1
         s["processed_workouts_this_week"] = []
+        for lift, data in s["main_lifts"].items():
+            _, _, next_target = SBS_PROGRAM[data["category"]].get(s["current_week"], (0,0,0))
+            s["main_lifts"][lift]["target_reps"] = next_target
         save_state(s)
     else:
         sync_with_hevy()
