@@ -42,8 +42,43 @@ def load_state():
     if not os.path.exists(STATE_FILE): return None
     with open(STATE_FILE, "r") as f: return json.load(f)
 
+def update_readme(state):
+    """Updates README.md with a live dashboard of the current training state."""
+    week = state["current_week"]
+    lifts = state["main_lifts"]
+    
+    dashboard = f"""# Hevy to SbS Sync 🏋️‍♂️🤖
+
+![Sync Status](https://github.com/greenducktape/Hevy-Script-SBS/actions/workflows/sync_hevy.yml/badge.svg)
+
+## 📅 Current Program State: **Week {week} / 21**
+*Next session targets are automatically calculated based on your Training Max (TM).*
+
+| Exercise | Category | Current TM | Next Target Weight | Next Target Reps |
+| :--- | :--- | :--- | :--- | :--- |
+"""
+    for name, data in lifts.items():
+        cat = data.get("category", "primary")
+        intensity, target = SBS_PROGRAM[cat].get(week, (0, 0))
+        weight = round((data["tm"] * intensity) / 2.5) * 2.5
+        dashboard += f"| {name} | {cat.capitalize()} | {data['tm']} kg | **{weight} kg** | {target} |\n"
+
+    dashboard += f"""
+---
+### 🛠 How it works
+- **Syncing:** Every night at 11 PM UTC, GitHub fetches your latest Hevy workout.
+- **Auto-Advance:** After **{state.get('workouts_per_week', 3)} unique workouts**, the week automatically increments.
+- **Manual Control:** Use the [Actions Tab](https://github.com/greenducktape/Hevy-Script-SBS/actions) to force a sync or advance the week.
+
+*Last updated: Week {week}*
+"""
+    with open("README.md", "w") as f:
+        f.write(dashboard)
+
 def save_state(state):
-    with open(STATE_FILE, "w") as f: json.dump(state, f, indent=4)
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f, indent=4)
+    update_readme(state)
 
 def get_multiplier(rep_difference):
     multipliers = {-2: 0.95, -1: 0.98, 0: 1.0, 1: 1.005, 2: 1.01, 3: 1.015, 4: 1.02, 5: 1.03}
