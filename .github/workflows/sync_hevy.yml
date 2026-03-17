@@ -1,0 +1,37 @@
+name: Sync Hevy Workout Data
+
+on:
+  schedule:
+    - cron: '0 23 * * *'  # Runs daily at 11 PM UTC
+  workflow_dispatch:      # Allows manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests python-dotenv
+
+    - name: Run sync script
+      env:
+        HEVY_API_KEY: ${{ secrets.HEVY_API_KEY }}
+      run: python sbs_logic.py
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add state.json
+        git commit -m "Auto-update training maxes from Hevy" || echo "No changes to commit"
+        git push

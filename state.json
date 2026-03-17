@@ -1,0 +1,9 @@
+{
+  "current_week": 1,
+  "main_lifts": {
+    "Squat": { "tm": 100, "target_reps": 5 },
+    "Bench Press": { "tm": 100, "target_reps": 5 },
+    "Sumo Deadlift": { "tm": 100, "target_reps": 5 },
+    "OHP": { "tm": 100, "target_reps": 5 }
+  }
+}
