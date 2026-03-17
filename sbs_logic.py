@@ -11,7 +11,21 @@ CSV_FILE = "exercise_ids.csv"
 HEVY_API_KEY = os.getenv("HEVY_API_KEY")
 HEVY_BASE_URL = "https://api.hevyapp.com/v1"
 
-LIFT_MAPPING = {"D04AC939":"Squat","79D0BB3A":"Bench Press","D20D7BBE":"Sumo Deadlift","7B8D84E8":"OHP","6FCD7755":"Dips","B5D3A742":"Bulgarian Split Squat","FE389074":"Block Pulls","50DFDFAB":"Long Pause Bench","6E6EE645":"Lunges","6AC96645":"DB OHP","29083183":"Chin-ups","1B2B1E7C":"Pull-ups","55E6546F":"Barbell rows"}
+def load_all_exercises_from_csv():
+    """Pre-loads all exercise IDs and names from the CSV into a mapping."""
+    mapping = {}
+    try:
+        with open(CSV_FILE, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for row in reader:
+                if row.get('id') and row.get('title'):
+                    mapping[row['id']] = row['title']
+    except FileNotFoundError:
+        print(f"Warning: {CSV_FILE} not found. Auto-discovery will be limited.")
+    return mapping
+
+LIFT_MAPPING = load_all_exercises_from_csv()
+
 ROUTINE_IDS = {"SbS Hyp Day 1":"e85acaee-289e-4b1f-8d6a-532c4eb3138f","SbS Hyp Day 2":"2194411d-866e-4fd0-8596-fa2302b1421c","SbS Hyp Day 3":"a4384cbb-8f1b-4517-bec2-09fdff80efb1"}
 
 SBS_PROGRAM = {
@@ -41,13 +55,17 @@ def update_readme(state):
         weight = round((data["tm"] * intensity) / 2.5) * 2.5
         dashboard += f"| {name} | {data['tm']} kg | **{weight} kg** | 3x{norm} | {target} |
 "
+    
+    dashboard += "
+**Note on Bodyweight Lifts:** For exercises like Dips or Pull-ups, progression is achieved by adding weight. To track this, switch to the 'Weighted Dips' or 'Weighted Pull-ups' exercise in Hevy. The script will auto-discover and track the new weighted version.
+"
     with open("README.md", "w") as f: f.write(dashboard)
 
 def update_hevy_routines(state):
     headers = {"api-key": HEVY_API_KEY, "Content-Type": "application/json"}
     week, routine_map = state["current_week"], state["routine_map"]
     for r_id, ex_names in routine_map.items():
-        base_title = next((k for k, v in ROUTINE_IDS.items() if v == r_id), "Unknown Routine")
+        base_title = next((k for k, v in ROUTINE_IDS.items() if v == r_id), "Unknown")
         current_title = f"{base_title} (W{week})"
         exercises_payload = []
         for name in ex_names:
@@ -57,11 +75,11 @@ def update_hevy_routines(state):
             weight = round((lift_data.get("tm", 0) * intensity) / 2.5) * 2.5
             sets = [{"type": "normal", "reps": norm, "weight_kg": weight} for _ in range(3)]
             sets.append({"type": "failure", "reps": target, "weight_kg": weight})
-            exercises_payload.append({"exercise_template_id": ex_id, "notes": f"W{week}: 3x{norm}, 1x{target}+", "sets": sets})
+            if ex_id: exercises_payload.append({"exercise_template_id": ex_id, "notes": f"W{week}: 3x{norm}, 1x{target}+", "sets": sets})
         try:
             r = requests.put(f"{HEVY_BASE_URL}/routines/{r_id}", headers=headers, json={"routine": {"title": current_title, "exercises": exercises_payload}})
             r.raise_for_status()
-        except Exception: pass
+        except: pass
 
 def get_multiplier(rep_diff):
     multipliers = {0: 1.0, 1: 1.005, 2: 1.01, 3: 1.015, 4: 1.02}
@@ -71,21 +89,21 @@ def get_multiplier(rep_diff):
 
 def sync_with_hevy():
     headers = {"api-key": HEVY_API_KEY, "Accept": "application/json"}
-    r = requests.get(f"{HEVY_BASE_URL}/workouts", headers=headers, params={"pageSize": 1})
-    if not r.ok or not r.json().get("workouts"): return
-    workout = r.json()["workouts"][0]
+    try:
+        r = requests.get(f"{HEVY_BASE_URL}/workouts", headers=headers, params={"pageSize": 1})
+        r.raise_for_status()
+        workouts = r.json().get("workouts", [])
+        if not workouts: return
+        workout = workouts[0]
+    except: return
     
     state = load_state()
-    if workout.get("id") in state["processed_workouts_this_week"]: return
+    if workout.get("id") in state.get("processed_workouts_this_week", []): return
     
     found_any = False
     for ex in workout.get("exercises", []):
         ex_id = ex.get("exercise_template_id")
         lift_name = LIFT_MAPPING.get(ex_id)
-        if not lift_name:
-            with open(CSV_FILE, mode='r', encoding='utf-8-sig') as f:
-                lift_name = next((row['title'] for row in csv.DictReader(f, delimiter=';') if row['id'] == ex_id), None)
-            if lift_name: LIFT_MAPPING[ex_id] = lift_name
 
         if lift_name:
             if lift_name not in state["main_lifts"]:
