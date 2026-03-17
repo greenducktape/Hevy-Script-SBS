@@ -1,9 +1,7 @@
 {
-    "current_week": 3,
+    "current_week": 4,
     "workouts_per_week": 3,
-    "processed_workouts_this_week": [
-        "8766bfd2-0a80-4916-90d8-4bc533611d07"
-    ],
+    "processed_workouts_this_week": [],
     "main_lifts": {
         "Squat": {
             "tm": 157.36,
