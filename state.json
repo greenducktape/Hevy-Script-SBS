@@ -1,57 +1,22 @@
 {
-    "current_week": 2,
-    "workouts_per_week": 3,
-    "processed_workouts_this_week": [],
-    "main_lifts": {
-        "Squat": {
-            "tm": 153.5,
-            "target_reps": 11,
-            "category": "primary"
-        },
-        "Bench Press": {
-            "tm": 107.0,
-            "target_reps": 11,
-            "category": "primary"
-        },
-        "Sumo Deadlift": {
-            "tm": 150.0,
-            "target_reps": 13,
-            "category": "auxiliary"
-        },
-        "OHP": {
-            "tm": 50.0,
-            "target_reps": 11,
-            "category": "primary"
-        },
-        "Dips": {
-            "tm": 0.0,
-            "target_reps": 13,
-            "category": "auxiliary"
-        },
-        "Bulgarian Split Squat": {
-            "tm": 60.5,
-            "target_reps": 13,
-            "category": "auxiliary"
-        },
-        "Block Pulls": {
-            "tm": 171.5,
-            "target_reps": 11,
-            "category": "primary"
-        },
-        "Long Pause Bench": {
-            "tm": 85.5,
-            "target_reps": 13,
-            "category": "auxiliary"
-        },
-        "Lunges": {
-            "tm": 82.0,
-            "target_reps": 13,
-            "category": "auxiliary"
-        },
-        "DB OHP": {
-            "tm": 39.0,
-            "target_reps": 13,
-            "category": "auxiliary"
-        }
-    }
+  "current_week": 1,
+  "workouts_per_week": 3,
+  "processed_workouts_this_week": [],
+  "routine_map": {
+    "e85acaee-289e-4b1f-8d6a-532c4eb3138f": ["Squat", "Sumo Deadlift", "Dips", "Chin-ups"],
+    "2194411d-866e-4fd0-8596-fa2302b1421c": ["Bench Press", "OHP", "Bulgarian Split Squat", "Pull-ups"],
+    "a4384cbb-8f1b-4517-bec2-09fdff80efb1": ["Block Pulls", "Long Pause Bench", "Lunges", "DB OHP", "Barbell rows"]
+  },
+  "main_lifts": {
+    "Squat": { "tm": 153.5, "target_reps": 12, "category": "primary" },
+    "Bench Press": { "tm": 107.0, "target_reps": 12, "category": "primary" },
+    "Sumo Deadlift": { "tm": 150.0, "target_reps": 15, "category": "auxiliary" },
+    "OHP": { "tm": 50.0, "target_reps": 12, "category": "primary" },
+    "Dips": { "tm": 0.0, "target_reps": 15, "category": "auxiliary" },
+    "Bulgarian Split Squat": { "tm": 60.5, "target_reps": 15, "category": "auxiliary" },
+    "Block Pulls": { "tm": 171.5, "target_reps": 12, "category": "primary" },
+    "Long Pause Bench": { "tm": 85.5, "target_reps": 15, "category": "auxiliary" },
+    "Lunges": { "tm": 82.0, "target_reps": 15, "category": "auxiliary" },
+    "DB OHP": { "tm": 39.0, "target_reps": 15, "category": "auxiliary" }
+  }
 }

@@ -1,63 +1,25 @@
 import json
 import os
-import requests
 import csv
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configuration
 STATE_FILE = "state.json"
 CSV_FILE = "exercise_ids.csv"
 HEVY_API_KEY = os.getenv("HEVY_API_KEY")
 HEVY_BASE_URL = "https://api.hevyapp.com/v1"
 
-# The "Source of Truth" Mapping
-LIFT_MAPPING = {
-    "D04AC939": "Squat",
-    "79D0BB3A": "Bench Press",
-    "D20D7BBE": "Sumo Deadlift",
-    "7B8D84E8": "OHP",
-    "6FCD7755": "Dips",
-    "B5D3A742": "Bulgarian Split Squat",
-    "FE389074": "Block Pulls",
-    "50DFDFAB": "Long Pause Bench",
-    "6E6EE645": "Lunges",
-    "6AC96645": "DB OHP",
-    "29083183": "Chin-ups",
-    "1B2B1E7C": "Pull-ups",
-    "55E6546F": "Barbell rows"
-}
-
-ROUTINE_IDS = {
-    "SbS Hyp Day 1": "e85acaee-289e-4b1f-8d6a-532c4eb3138f",
-    "SbS Hyp Day 2": "2194411d-866e-4fd0-8596-fa2302b1421c",
-    "SbS Hyp Day 3": "a4384cbb-8f1b-4517-bec2-09fdff80efb1"
-}
-
-# We'll now store which exercises belong to which routine ID
-# to allow for auto-discovery and adding new lifts to the right day.
-ROUTINE_MAP = {
-    "e85acaee-289e-4b1f-8d6a-532c4eb3138f": ["Squat", "Sumo Deadlift", "Dips", "Chin-ups"],
-    "2194411d-866e-4fd0-8596-fa2302b1421c": ["Bench Press", "OHP", "Bulgarian Split Squat", "Pull-ups"],
-    "a4384cbb-8f1b-4517-bec2-09fdff80efb1": ["Block Pulls", "Long Pause Bench", "Lunges", "DB OHP", "Barbell rows"]
-}
+LIFT_MAPPING = {"D04AC939":"Squat","79D0BB3A":"Bench Press","D20D7BBE":"Sumo Deadlift","7B8D84E8":"OHP","6FCD7755":"Dips","B5D3A742":"Bulgarian Split Squat","FE389074":"Block Pulls","50DFDFAB":"Long Pause Bench","6E6EE645":"Lunges","6AC96645":"DB OHP","29083183":"Chin-ups","1B2B1E7C":"Pull-ups","55E6546F":"Barbell rows"}
+ROUTINE_IDS = {"SbS Hyp Day 1":"e85acaee-289e-4b1f-8d6a-532c4eb3138f","SbS Hyp Day 2":"2194411d-866e-4fd0-8596-fa2302b1421c","SbS Hyp Day 3":"a4384cbb-8f1b-4517-bec2-09fdff80efb1"}
 
 SBS_PROGRAM = {
-    "primary": {
-        1: (0.70, 10, 12), 2: (0.725, 9, 11), 3: (0.75, 8, 10), 4: (0.725, 9, 11), 5: (0.75, 8, 10), 6: (0.775, 7, 9), 7: (0.60, 14, 18),
-        8: (0.725, 9, 11), 9: (0.75, 8, 10), 10: (0.775, 7, 9), 11: (0.75, 8, 10), 12: (0.775, 7, 9), 13: (0.80, 6, 8), 14: (0.60, 14, 18),
-        15: (0.75, 8, 10), 16: (0.775, 7, 9), 17: (0.80, 6, 8), 18: (0.775, 7, 9), 19: (0.80, 6, 8), 20: (0.825, 5, 6), 21: (0.60, 14, 18)
-    },
-    "auxiliary": {
-        1: (0.65, 12, 15), 2: (0.675, 11, 13), 3: (0.70, 10, 12), 4: (0.675, 11, 13), 5: (0.70, 10, 12), 6: (0.725, 9, 11), 7: (0.55, 17, 21),
-        8: (0.675, 11, 13), 9: (0.70, 10, 12), 10: (0.725, 9, 11), 11: (0.70, 10, 12), 12: (0.725, 9, 11), 13: (0.75, 8, 10), 14: (0.55, 17, 21),
-        15: (0.70, 10, 12), 16: (0.725, 9, 11), 17: (0.75, 8, 10), 18: (0.725, 9, 11), 19: (0.75, 8, 10), 20: (0.775, 7, 9), 21: (0.55, 17, 21)
-    }
+    "primary": {1:(0.7,10,12),2:(0.725,9,11),3:(0.75,8,10),4:(0.725,9,11),5:(0.75,8,10),6:(0.775,7,9),7:(0.6,14,18),8:(0.725,9,11),9:(0.75,8,10),10:(0.775,7,9),11:(0.75,8,10),12:(0.775,7,9),13:(0.8,6,8),14:(0.6,14,18),15:(0.75,8,10),16:(0.775,7,9),17:(0.8,6,8),18:(0.775,7,9),19:(0.8,6,8),20:(0.825,5,6),21:(0.6,14,18)},
+    "auxiliary": {1:(0.65,12,15),2:(0.675,11,13),3:(0.7,10,12),4:(0.675,11,13),5:(0.7,10,12),6:(0.725,9,11),7:(0.55,17,21),8:(0.675,11,13),9:(0.7,10,12),10:(0.725,9,11),11:(0.7,10,12),12:(0.725,9,11),13:(0.75,8,10),14:(0.55,17,21),15:(0.7,10,12),16:(0.725,9,11),17:(0.75,8,10),18:(0.725,9,11),19:(0.75,8,10),20:(0.775,7,9),21:(0.55,17,21)}
 }
 
 def load_state():
-    if not os.path.exists(STATE_FILE): return None
     with open(STATE_FILE, "r") as f: return json.load(f)
 
 def save_state(state):
@@ -65,155 +27,84 @@ def save_state(state):
     update_readme(state)
     update_hevy_routines(state)
 
-def get_exercise_name_from_csv(ex_id):
-    """Looks up an ID in the CSV to find the name."""
-    try:
-        with open(CSV_FILE, mode='r', encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f, delimiter=';')
-            for row in reader:
-                if row['id'] == ex_id:
-                    return row['title']
-    except: return f"Unknown Exercise ({ex_id})"
-    return f"Unknown Exercise ({ex_id})"
-
 def update_readme(state):
-    week = state["current_week"]
-    dashboard = f"# Hevy to SbS Sync (Hypertrophy) 🏋️‍♂️💪\n\n## 📅 Week {week} / 21\n\n| Exercise | TM | Next Weight | Normal Sets | AMRAP Target |\n| :--- | :--- | :--- | :--- | :--- |\n"
-    for name, data in state["main_lifts"].items():
-        intensity, norm, target = SBS_PROGRAM[data.get("category", "primary")].get(week, (0, 0, 0))
+    week, lifts = state["current_week"], state["main_lifts"]
+    dashboard = f"# Hevy to SbS Sync (Hypertrophy) 🏋️‍♂️💪
+
+## 📅 Week {week} / 21
+
+| Exercise | TM | Next Weight | Sets | AMRAP |
+| :--- | :--- | :--- | :--- | :--- |
+"
+    for name, data in lifts.items():
+        intensity, norm, target = SBS_PROGRAM[data.get("category", "primary")].get(week, (0,0,0))
         weight = round((data["tm"] * intensity) / 2.5) * 2.5
-        dashboard += f"| {name} | {data['tm']} kg | **{weight} kg** | 3x{norm} | {target} |\n"
+        dashboard += f"| {name} | {data['tm']} kg | **{weight} kg** | 3x{norm} | {target} |
+"
     with open("README.md", "w") as f: f.write(dashboard)
 
 def update_hevy_routines(state):
-    """Dynamically fetches routines, updates weights/reps, and pushes back to Hevy."""
-    if not HEVY_API_KEY: return
     headers = {"api-key": HEVY_API_KEY, "Content-Type": "application/json"}
-    week = state["current_week"]
-
-    for base_title, r_id in ROUTINE_IDS.items():
+    week, routine_map = state["current_week"], state["routine_map"]
+    for r_id, ex_names in routine_map.items():
+        base_title = next((k for k, v in ROUTINE_IDS.items() if v == r_id), "Unknown Routine")
+        current_title = f"{base_title} (W{week})"
+        exercises_payload = []
+        for name in ex_names:
+            lift_data = state["main_lifts"].get(name, {})
+            ex_id = next((k for k, v in LIFT_MAPPING.items() if v == name), None)
+            intensity, norm, target = SBS_PROGRAM[lift_data.get("category", "primary")].get(week, (0,0,0))
+            weight = round((lift_data.get("tm", 0) * intensity) / 2.5) * 2.5
+            sets = [{"type": "normal", "reps": norm, "weight_kg": weight} for _ in range(3)]
+            sets.append({"type": "failure", "reps": target, "weight_kg": weight})
+            exercises_payload.append({"exercise_template_id": ex_id, "notes": f"W{week}: 3x{norm}, 1x{target}+", "sets": sets})
         try:
-            # 1. Fetch the latest version of the routine from Hevy
-            print(f"Fetching routine: {base_title}...")
-            get_res = requests.get(f"{HEVY_BASE_URL}/routines/{r_id}", headers=headers)
-            get_res.raise_for_status()
-            routine_data = get_res.json()
-
-            # 2. Iterate through the exercises from Hevy's response and update them
-            updated_exercises = []
-            for exercise in routine_data.get("exercises", []):
-                ex_id = exercise.get("exercise_template_id")
-                lift_name = LIFT_MAPPING.get(ex_id)
-                
-                if lift_name and lift_name in state["main_lifts"]:
-                    lift_data = state["main_lifts"][lift_name]
-                    intensity, norm_reps, target_reps = SBS_PROGRAM[lift_data["category"]].get(week, (0,0,0))
-                    
-                    # Update weight for all sets
-                    new_weight = round((lift_data["tm"] * intensity) / 2.5) * 2.5
-                    for s in exercise["sets"]:
-                        s["weight_kg"] = new_weight
-                    
-                    # Special Week Logic (Deload/Testing)
-                    if week in [7, 14, 21]:
-                        # For Deloads, set all sets to 'normal' with no AMRAP
-                        exercise["sets"][-1]["type"] = "normal"
-                        exercise["notes"] = f"W{week}: DELOAD"
-                    else:
-                        # For normal weeks, ensure the last set is 'failure'
-                        exercise["sets"][-1]["type"] = "failure"
-                        exercise["notes"] = f"W{week}: 3x{norm_reps}, 1x{target_reps}+"
-
-                updated_exercises.append(exercise)
-            
-            # 3. Push the modified routine back to Hevy
-            current_title = f"{base_title} (W{week})"
-            payload = {"routine": {"title": current_title, "exercises": updated_exercises}}
-            print(f"Pushing updates to Hevy: {current_title}...")
-            put_res = requests.put(f"{HEVY_BASE_URL}/routines/{r_id}", headers=headers, json=payload)
-            put_res.raise_for_status()
-            print(f"   ✅ Updated {current_title}")
-
-        except Exception as e:
-            print(f"   ❌ Error processing routine {base_title}: {e}")
+            r = requests.put(f"{HEVY_BASE_URL}/routines/{r_id}", headers=headers, json={"routine": {"title": current_title, "exercises": exercises_payload}})
+            r.raise_for_status()
+        except Exception: pass
 
 def get_multiplier(rep_diff):
+    multipliers = {0: 1.0, 1: 1.005, 2: 1.01, 3: 1.015, 4: 1.02}
     if rep_diff <= -2: return 0.95
     if rep_diff == -1: return 0.98
-    if rep_diff == 0: return 1.0
-    if rep_diff == 1: return 1.005
-    if rep_diff == 2: return 1.01
-    if rep_diff == 3: return 1.015
-    if rep_diff == 4: return 1.02
-    return 1.03
+    return multipliers.get(rep_diff, 1.03)
 
 def sync_with_hevy():
-    print("--- Hevy to SbS Sync ---")
-    if not HEVY_API_KEY: return
     headers = {"api-key": HEVY_API_KEY, "Accept": "application/json"}
-    try:
-        r = requests.get(f"{HEVY_BASE_URL}/workouts", headers=headers, params={"pageSize": 1})
-        r.raise_for_status()
-        workouts = r.json().get("workouts", [])
-        if not workouts: return
-        workout = workouts[0]
-    except: return
-
+    r = requests.get(f"{HEVY_BASE_URL}/workouts", headers=headers, params={"pageSize": 1})
+    if not r.ok or not r.json().get("workouts"): return
+    workout = r.json()["workouts"][0]
+    
     state = load_state()
-    if not state or workout.get("id") in state.get("processed_workouts_this_week", []): return
-
-    print(f"🔄 Processing workout: {workout.get('title')}")
+    if workout.get("id") in state["processed_workouts_this_week"]: return
+    
     found_any = False
-    r_id = workout.get("routine_id")
-
     for ex in workout.get("exercises", []):
         ex_id = ex.get("exercise_template_id")
         lift_name = LIFT_MAPPING.get(ex_id)
-        
-        # AUTO-DISCOVERY LOGIC:
         if not lift_name:
-            lift_name = get_exercise_name_from_csv(ex_id)
-            print(f"✨ Auto-discovered new exercise: {lift_name}")
-            LIFT_MAPPING[ex_id] = lift_name
-            # Add to Routine Map if we know which routine this is
-            if r_id and r_id in ROUTINE_MAP:
-                if lift_name not in ROUTINE_MAP[r_id]:
-                    ROUTINE_MAP[r_id].append(lift_name)
+            with open(CSV_FILE, mode='r', encoding='utf-8-sig') as f:
+                lift_name = next((row['title'] for row in csv.DictReader(f, delimiter=';') if row['id'] == ex_id), None)
+            if lift_name: LIFT_MAPPING[ex_id] = lift_name
 
         if lift_name:
-            # Initialize in state if missing, with a calculated TM
             if lift_name not in state["main_lifts"]:
-                print(f"➕ Registering {lift_name} with a calculated Training Max...")
-                new_tm = 100.0 # Default fallback
-                sets = ex.get("sets", [])
-                if sets:
-                    last_set = sets[-1]
-                    weight = last_set.get("weight_kg", 0)
-                    reps = last_set.get("reps", 0)
-                    if weight and reps > 1:
-                        # Brzycki 1RM Formula: Weight / (1.0278 - (0.0278 * Reps))
-                        estimated_1rm = weight / (1.0278 - (0.0278 * reps))
-                        # Set TM to 90% of estimated 1RM
-                        new_tm = round(estimated_1rm * 0.90, 2)
-                        print(f"   -> Calculated starting TM: {new_tm} kg (from {reps} reps at {weight} kg)")
-
-                state["main_lifts"][lift_name] = {
-                    "tm": new_tm,
-                    "target_reps": 15, # Default AMRAP for new auxiliary
-                    "category": "auxiliary"
-                }
-
+                last_set = ex.get("sets", [])[-1]
+                weight, reps = last_set.get("weight_kg", 0), last_set.get("reps", 0)
+                new_tm = round((weight / (1.0278 - (0.0278 * reps))) * 0.90, 2) if weight and reps > 1 else 100.0
+                state["main_lifts"][lift_name] = {"tm": new_tm, "target_reps": 15, "category": "auxiliary"}
+                if r_id := workout.get("routine_id"):
+                    if r_id in state["routine_map"] and lift_name not in state["routine_map"][r_id]:
+                        state["routine_map"][r_id].append(lift_name)
+            
             found_any = True
-            sets = ex.get("sets", [])
-            last_set = next((s for s in reversed(sets) if s.get("type") == "failure"), sets[-1])
-            reps = last_set.get("reps", 0)
-            target = state["main_lifts"][lift_name]["target_reps"]
+            last_set = ex.get("sets", [])[-1]
+            reps, target = last_set.get("reps", 0), state["main_lifts"][lift_name]["target_reps"]
             state["main_lifts"][lift_name]["tm"] = round(state["main_lifts"][lift_name]["tm"] * get_multiplier(reps - target), 2)
-            print(f"   💪 {lift_name}: {reps} reps (Target {target}) -> New TM: {state['main_lifts'][lift_name]['tm']}")
-
+            
     if found_any:
-        state.setdefault("processed_workouts_this_week", []).append(workout.get("id"))
-        if len(state["processed_workouts_this_week"]) >= state.get("workouts_per_week", 3):
+        state["processed_workouts_this_week"].append(workout.get("id"))
+        if len(state["processed_workouts_this_week"]) >= state["workouts_per_week"]:
             state["current_week"] += 1
             state["processed_workouts_this_week"] = []
             for lift, data in state["main_lifts"].items():
@@ -231,5 +122,4 @@ if __name__ == "__main__":
             _, _, next_target = SBS_PROGRAM[data["category"]].get(s["current_week"], (0,0,0))
             s["main_lifts"][lift]["target_reps"] = next_target
         save_state(s)
-    else:
-        sync_with_hevy()
+    else: sync_with_hevy()
