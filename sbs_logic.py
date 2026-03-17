@@ -43,22 +43,21 @@ def save_state(state):
 
 def update_readme(state):
     week, lifts = state["current_week"], state["main_lifts"]
-    dashboard = f"# Hevy to SbS Sync (Hypertrophy) 🏋️‍♂️💪
+    dashboard = f"""# Hevy to SbS Sync (Hypertrophy) 🏋️‍♂️💪
 
 ## 📅 Week {week} / 21
 
 | Exercise | TM | Next Weight | Sets | AMRAP |
 | :--- | :--- | :--- | :--- | :--- |
-"
+"""
     for name, data in lifts.items():
         intensity, norm, target = SBS_PROGRAM[data.get("category", "primary")].get(week, (0,0,0))
         weight = round((data["tm"] * intensity) / 2.5) * 2.5
-        dashboard += f"| {name} | {data['tm']} kg | **{weight} kg** | 3x{norm} | {target} |
-"
-    
-    dashboard += "
+        dashboard += f"| {name} | {data['tm']} kg | **{weight} kg** | 3x{norm} | {target} |\n"
+
+    dashboard += """
 **Note on Bodyweight Lifts:** For exercises like Dips or Pull-ups, progression is achieved by adding weight. To track this, switch to the 'Weighted Dips' or 'Weighted Pull-ups' exercise in Hevy. The script will auto-discover and track the new weighted version.
-"
+"""
     with open("README.md", "w") as f: f.write(dashboard)
 
 def update_hevy_routines(state):
