@@ -25,7 +25,6 @@ LIFT_MAPPING = {
 }
 
 # SBS 21-Week Program Data: (Intensity %, AMRAP Target)
-# Keyed by (week, category)
 SBS_PROGRAM = {
     "primary": {
         1: (0.70, 10), 2: (0.75, 8), 3: (0.80, 6), 4: (0.725, 9), 5: (0.775, 7), 6: (0.825, 5), 7: (0.50, 0),
@@ -47,9 +46,7 @@ def save_state(state):
     with open(STATE_FILE, "w") as f: json.dump(state, f, indent=4)
 
 def get_multiplier(rep_difference):
-    multipliers = {
-        -2: 0.95, -1: 0.98, 0: 1.0, 1: 1.005, 2: 1.01, 3: 1.015, 4: 1.02, 5: 1.03
-    }
+    multipliers = {-2: 0.95, -1: 0.98, 0: 1.0, 1: 1.005, 2: 1.01, 3: 1.015, 4: 1.02, 5: 1.03}
     if rep_difference <= -2: return multipliers[-2]
     if rep_difference >= 5: return multipliers[5]
     return multipliers.get(rep_difference, 1.0)
@@ -57,11 +54,8 @@ def get_multiplier(rep_difference):
 def calculate_new_tm(state, lift_name, actual_reps, target_reps):
     lift_data = state["main_lifts"][lift_name]
     rep_diff = actual_reps - target_reps
-    multiplier = get_multiplier(rep_diff)
-    
-    new_tm = round(lift_data["tm"] * multiplier, 2)
+    new_tm = round(lift_data["tm"] * get_multiplier(rep_diff), 2)
     state["main_lifts"][lift_name]["tm"] = new_tm
-    
     print(f"   -> Updated {lift_name}: TM {lift_data['tm']} -> {new_tm} (Diff: {rep_diff})")
     return state
 
@@ -76,20 +70,15 @@ def fetch_latest_workout():
     except Exception as e:
         print(f"Error fetching: {e}"); return None
 
-def generate_next_week_summary(state):
-    next_week = state["current_week"] + 1
-    if next_week > 21: return "Program Complete!"
-    
-    print(f"\n--- NEXT WEEK PLAN (Week {next_week}) ---")
+def update_targets_for_week(state, week_number):
+    """Calculates weights and targets for the given week."""
+    if week_number > 21: return state
+    print(f"\n--- PREPARING WEEK {week_number} ---")
     for lift, data in state["main_lifts"].items():
-        cat = data.get("category", "primary")
-        intensity, target = SBS_PROGRAM[cat].get(next_week, (0, 0))
+        intensity, target = SBS_PROGRAM[data.get("category", "primary")].get(week_number, (0, 0))
         weight = round((data["tm"] * intensity) / 2.5) * 2.5
-        
-        # Update state for next week's sync
         state["main_lifts"][lift]["target_reps"] = target
-        
-        print(f"{lift:<22} | Weight: {weight:>6} kg | Target Reps: {target}")
+        print(f"{lift:<22} | Weight: {weight:>6} kg | Target: {target}")
     return state
 
 def sync_with_hevy():
@@ -97,10 +86,16 @@ def sync_with_hevy():
     workout = fetch_latest_workout()
     if not workout: return
 
-    print(f"Found workout: {workout.get('title')}")
+    workout_id = workout.get("id")
     state = load_state()
     if not state: return
 
+    # Check if this specific workout has already been processed this week
+    if workout_id in state.get("processed_workouts_this_week", []):
+        print(f"Workout {workout.get('title')} (ID: {workout_id}) already processed.")
+        return
+
+    print(f"Processing new workout: {workout.get('title')}")
     found_any = False
     for ex in workout.get("exercises", []):
         lift_name = LIFT_MAPPING.get(ex.get("exercise_template_id"))
@@ -111,30 +106,29 @@ def sync_with_hevy():
             state = calculate_new_tm(state, lift_name, last_set.get("reps", 0), state["main_lifts"][lift_name]["target_reps"])
 
     if found_any:
-        # After syncing all exercises for the current week, 
-        # we prepare the targets for the NEXT week.
-        # User should run `python sbs_logic.py --next-week` to increment.
+        # Record this workout as processed
+        state.setdefault("processed_workouts_this_week", []).append(workout_id)
+        
+        # Check if we finished the week
+        if len(state["processed_workouts_this_week"]) >= state.get("workouts_per_week", 3):
+            print("\nWeek complete! Automatically advancing...")
+            state["current_week"] += 1
+            state["processed_workouts_this_week"] = [] # Reset for next week
+            state = update_targets_for_week(state, state["current_week"])
+        
         save_state(state)
-        print("\nSync complete. Run with --next-week to advance to the next week's targets.")
+        print("\nSync complete. State saved.")
     else:
-        print("No matching lifts found.")
-
-def advance_week():
-    state = load_state()
-    if not state: return
-    state = generate_next_week_summary(state)
-    if isinstance(state, dict):
-        state["current_week"] += 1
-        save_state(state)
-        print(f"\nSuccessfully advanced to Week {state['current_week']}.")
+        print("No matching lifts found in this workout.")
 
 if __name__ == "__main__":
     import sys
     if "--next-week" in sys.argv:
-        advance_week()
-    elif "--list-exercises" in sys.argv:
-        import requests # Re-importing just in case of script usage
-        # This part exists in the previous version, I'll keep it simple
-        pass 
+        state = load_state()
+        state["current_week"] += 1
+        state["processed_workouts_this_week"] = []
+        state = update_targets_for_week(state, state["current_week"])
+        save_state(state)
+        print(f"Manually advanced to Week {state['current_week']}.")
     else:
         sync_with_hevy()
