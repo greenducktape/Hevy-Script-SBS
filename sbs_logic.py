@@ -12,13 +12,17 @@ HEVY_API_KEY = os.getenv("HEVY_API_KEY")
 HEVY_BASE_URL = "https://api.hevyapp.com/v1"
 
 # Mapping: Hevy Exercise Title OR exercise_template_id -> Internal Lift Name
-# Pro Tip: Using exercise_template_id is more robust than titles.
-# You can run `python sbs_logic.py --list-exercises` to find your IDs.
 LIFT_MAPPING = {
     "Squat (Barbell)": "Squat",
     "Bench Press (Barbell)": "Bench Press",
     "Deadlift (Sumo)": "Sumo Deadlift",
-    "Overhead Press (Barbell)": "OHP"
+    "Overhead Press (Barbell)": "OHP",
+    "Dips": "Dips",
+    "Bulgarian Split Squat": "Bulgarian Split Squat",
+    "Rack Pull": "Block Pulls",
+    "Pause Bench Press": "Long Pause Bench",
+    "Lunge (Barbell)": "Lunges",
+    "Dumbbell Shoulder Press": "DB OHP"
 }
 
 def load_state():
