@@ -86,40 +86,56 @@ def update_readme(state):
     with open("README.md", "w") as f: f.write(dashboard)
 
 def update_hevy_routines(state):
+    """Dynamically fetches routines, updates weights/reps, and pushes back to Hevy."""
     if not HEVY_API_KEY: return
     headers = {"api-key": HEVY_API_KEY, "Content-Type": "application/json"}
     week = state["current_week"]
-    
-    # We reconstruct titles based on ROUTINE_IDS keys
-    for base_title, r_id in ROUTINE_IDS.items():
-        current_title = f"{base_title} (W{week})"
-        print(f"Updating Hevy: {current_title}...")
-        exercises_payload = []
-        
-        # Get exercises for this routine (including any auto-discovered ones)
-        ex_names = ROUTINE_MAP.get(r_id, [])
-        for name in ex_names:
-            lift_data = state["main_lifts"].get(name)
-            ex_id = next((k for k, v in LIFT_MAPPING.items() if v == name), None)
-            
-            if not lift_data: # Bodyweight/Accessories
-                sets = [{"type": "normal", "reps": 10, "weight_kg": 0} for _ in range(4)]
-                note = "Accessory"
-            else:
-                intensity, norm, target = SBS_PROGRAM[lift_data["category"]].get(week, (0, 0, 0))
-                weight = round((lift_data["tm"] * intensity) / 2.5) * 2.5
-                sets = [{"type": "normal", "reps": norm, "weight_kg": weight} for _ in range(3)]
-                sets.append({"type": "failure", "reps": target, "weight_kg": weight})
-                note = f"W{week}: 3x{norm}, 1x{target}+"
-            
-            if ex_id:
-                exercises_payload.append({"exercise_template_id": ex_id, "notes": note, "sets": sets})
 
+    for base_title, r_id in ROUTINE_IDS.items():
         try:
-            r = requests.put(f"{HEVY_BASE_URL}/routines/{r_id}", headers=headers, json={"routine": {"title": current_title, "exercises": exercises_payload}})
-            r.raise_for_status()
+            # 1. Fetch the latest version of the routine from Hevy
+            print(f"Fetching routine: {base_title}...")
+            get_res = requests.get(f"{HEVY_BASE_URL}/routines/{r_id}", headers=headers)
+            get_res.raise_for_status()
+            routine_data = get_res.json()
+
+            # 2. Iterate through the exercises from Hevy's response and update them
+            updated_exercises = []
+            for exercise in routine_data.get("exercises", []):
+                ex_id = exercise.get("exercise_template_id")
+                lift_name = LIFT_MAPPING.get(ex_id)
+                
+                if lift_name and lift_name in state["main_lifts"]:
+                    lift_data = state["main_lifts"][lift_name]
+                    intensity, norm_reps, target_reps = SBS_PROGRAM[lift_data["category"]].get(week, (0,0,0))
+                    
+                    # Update weight for all sets
+                    new_weight = round((lift_data["tm"] * intensity) / 2.5) * 2.5
+                    for s in exercise["sets"]:
+                        s["weight_kg"] = new_weight
+                    
+                    # Special Week Logic (Deload/Testing)
+                    if week in [7, 14, 21]:
+                        # For Deloads, set all sets to 'normal' with no AMRAP
+                        exercise["sets"][-1]["type"] = "normal"
+                        exercise["notes"] = f"W{week}: DELOAD"
+                    else:
+                        # For normal weeks, ensure the last set is 'failure'
+                        exercise["sets"][-1]["type"] = "failure"
+                        exercise["notes"] = f"W{week}: 3x{norm_reps}, 1x{target_reps}+"
+
+                updated_exercises.append(exercise)
+            
+            # 3. Push the modified routine back to Hevy
+            current_title = f"{base_title} (W{week})"
+            payload = {"routine": {"title": current_title, "exercises": updated_exercises}}
+            print(f"Pushing updates to Hevy: {current_title}...")
+            put_res = requests.put(f"{HEVY_BASE_URL}/routines/{r_id}", headers=headers, json=payload)
+            put_res.raise_for_status()
             print(f"   ✅ Updated {current_title}")
-        except Exception as e: print(f"   ❌ Error updating {base_title}: {e}")
+
+        except Exception as e:
+            print(f"   ❌ Error processing routine {base_title}: {e}")
 
 def get_multiplier(rep_diff):
     if rep_diff <= -2: return 0.95
