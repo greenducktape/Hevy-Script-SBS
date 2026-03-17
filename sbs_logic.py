@@ -90,11 +90,15 @@ def update_hevy_routines(state):
                 sets = [{"type": "normal", "reps": reps, "weight_kg": weight} for _ in range(3)]
                 sets.append({"type": "failure", "reps": target, "weight_kg": weight})
             exercises_payload.append({"exercise_template_id": ex_id, "notes": f"W{week} Target: {target}", "sets": sets})
+        payload = {"routine": {"title": title, "folder_id": None, "exercises": exercises_payload}}
         try:
-            r = requests.put(f"{HEVY_BASE_URL}/routines/{routine_id}", headers=headers, json={"routine": {"title": title, "folder_id": None, "exercises": exercises_payload}})
+            r = requests.put(f"{HEVY_BASE_URL}/routines/{routine_id}", headers=headers, json=payload)
+            if r.status_code != 200:
+                print(f"   ❌ Error {r.status_code}: {r.text}")
             r.raise_for_status()
             print(f"   ✅ Updated {title}")
-        except Exception as e: print(f"   ❌ Error updating {title}: {e}")
+        except Exception as e:
+            print(f"   ❌ Failed {title}: {e}")
 
 def get_multiplier(rep_diff):
     if rep_diff <= -2: return 0.95
