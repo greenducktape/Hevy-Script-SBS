@@ -11,18 +11,18 @@ STATE_FILE = "state.json"
 HEVY_API_KEY = os.getenv("HEVY_API_KEY")
 HEVY_BASE_URL = "https://api.hevyapp.com/v1"
 
-# Mapping: Hevy Exercise Title OR exercise_template_id -> Internal Lift Name
+# Mapping: Hevy exercise_template_id -> Internal Lift Name in state.json
 LIFT_MAPPING = {
-    "Squat (Barbell)": "Squat",
-    "Bench Press (Barbell)": "Bench Press",
-    "Deadlift (Sumo)": "Sumo Deadlift",
-    "Overhead Press (Barbell)": "OHP",
-    "Dips": "Dips",
-    "Bulgarian Split Squat": "Bulgarian Split Squat",
-    "Rack Pull": "Block Pulls",
-    "Pause Bench Press": "Long Pause Bench",
-    "Lunge (Barbell)": "Lunges",
-    "Dumbbell Shoulder Press": "DB OHP"
+    "D04AC939": "Squat",
+    "79D0BB3A": "Bench Press",
+    "D20D7BBE": "Sumo Deadlift",
+    "7B8D84E8": "OHP",
+    "6FCD7755": "Dips", # Using Chest Dip ID
+    "B5D3A742": "Bulgarian Split Squat",
+    "FE389074": "Block Pulls", # Using Rack Pull ID
+    "50DFDFAB": "Long Pause Bench", # Using Incline Barbell as proxy or change to Pause Bench if you find it
+    "6E6EE645": "Lunges", # Using Barbell Lunge ID
+    "6AC96645": "DB OHP"  # Using Dumbbell Overhead Press ID
 }
 
 def load_state():
