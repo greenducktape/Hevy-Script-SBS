@@ -1,15 +1,45 @@
 {
-  "current_week": 1,
-  "main_lifts": {
-    "Squat": { "tm": 107.5, "target_reps": 10 },
-    "Sumo Deadlift": { "tm": 105.0, "target_reps": 12 },
-    "Dips": { "tm": 0.0, "target_reps": 12 },
-    "Bench Press": { "tm": 75.0, "target_reps": 10 },
-    "OHP": { "tm": 35.0, "target_reps": 10 },
-    "Bulgarian Split Squat": { "tm": 42.5, "target_reps": 12 },
-    "Block Pulls": { "tm": 120.0, "target_reps": 10 },
-    "Long Pause Bench": { "tm": 60.0, "target_reps": 12 },
-    "Lunges": { "tm": 57.5, "target_reps": 12 },
-    "DB OHP": { "tm": 27.5, "target_reps": 12 }
-  }
+    "current_week": 1,
+    "main_lifts": {
+        "Squat": {
+            "tm": 102.12,
+            "target_reps": 10
+        },
+        "Sumo Deadlift": {
+            "tm": 105.0,
+            "target_reps": 12
+        },
+        "Dips": {
+            "tm": 0.0,
+            "target_reps": 12
+        },
+        "Bench Press": {
+            "tm": 73.5,
+            "target_reps": 10
+        },
+        "OHP": {
+            "tm": 35.0,
+            "target_reps": 10
+        },
+        "Bulgarian Split Squat": {
+            "tm": 42.5,
+            "target_reps": 12
+        },
+        "Block Pulls": {
+            "tm": 120.0,
+            "target_reps": 10
+        },
+        "Long Pause Bench": {
+            "tm": 60.0,
+            "target_reps": 12
+        },
+        "Lunges": {
+            "tm": 57.5,
+            "target_reps": 12
+        },
+        "DB OHP": {
+            "tm": 27.5,
+            "target_reps": 12
+        }
+    }
 }
