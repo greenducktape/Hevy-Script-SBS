@@ -1,10 +1,12 @@
 {
     "current_week": 3,
     "workouts_per_week": 3,
-    "processed_workouts_this_week": [],
+    "processed_workouts_this_week": [
+        "8766bfd2-0a80-4916-90d8-4bc533611d07"
+    ],
     "main_lifts": {
         "Squat": {
-            "tm": 155.03,
+            "tm": 157.36,
             "target_reps": 10,
             "category": "primary"
         },
@@ -14,7 +16,7 @@
             "category": "primary"
         },
         "Sumo Deadlift": {
-            "tm": 152.25,
+            "tm": 155.3,
             "target_reps": 12,
             "category": "auxiliary"
         },
