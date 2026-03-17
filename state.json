@@ -1,17 +1,57 @@
 {
-  "current_week": 1,
-  "workouts_per_week": 3,
-  "processed_workouts_this_week": [],
-  "main_lifts": {
-    "Squat": { "tm": 153.5, "target_reps": 10, "category": "primary" },
-    "Bench Press": { "tm": 107.0, "target_reps": 10, "category": "primary" },
-    "Sumo Deadlift": { "tm": 150.0, "target_reps": 12, "category": "auxiliary" },
-    "OHP": { "tm": 50.0, "target_reps": 10, "category": "primary" },
-    "Dips": { "tm": 0.0, "target_reps": 12, "category": "auxiliary" },
-    "Bulgarian Split Squat": { "tm": 60.5, "target_reps": 12, "category": "auxiliary" },
-    "Block Pulls": { "tm": 171.5, "target_reps": 10, "category": "primary" },
-    "Long Pause Bench": { "tm": 85.5, "target_reps": 12, "category": "auxiliary" },
-    "Lunges": { "tm": 82.0, "target_reps": 12, "category": "auxiliary" },
-    "DB OHP": { "tm": 39.0, "target_reps": 12, "category": "auxiliary" }
-  }
+    "current_week": 2,
+    "workouts_per_week": 3,
+    "processed_workouts_this_week": [],
+    "main_lifts": {
+        "Squat": {
+            "tm": 153.5,
+            "target_reps": 8,
+            "category": "primary"
+        },
+        "Bench Press": {
+            "tm": 107.0,
+            "target_reps": 8,
+            "category": "primary"
+        },
+        "Sumo Deadlift": {
+            "tm": 150.0,
+            "target_reps": 12,
+            "category": "auxiliary"
+        },
+        "OHP": {
+            "tm": 50.0,
+            "target_reps": 8,
+            "category": "primary"
+        },
+        "Dips": {
+            "tm": 0.0,
+            "target_reps": 12,
+            "category": "auxiliary"
+        },
+        "Bulgarian Split Squat": {
+            "tm": 60.5,
+            "target_reps": 12,
+            "category": "auxiliary"
+        },
+        "Block Pulls": {
+            "tm": 171.5,
+            "target_reps": 8,
+            "category": "primary"
+        },
+        "Long Pause Bench": {
+            "tm": 85.5,
+            "target_reps": 12,
+            "category": "auxiliary"
+        },
+        "Lunges": {
+            "tm": 82.0,
+            "target_reps": 12,
+            "category": "auxiliary"
+        },
+        "DB OHP": {
+            "tm": 39.0,
+            "target_reps": 12,
+            "category": "auxiliary"
+        }
+    }
 }
