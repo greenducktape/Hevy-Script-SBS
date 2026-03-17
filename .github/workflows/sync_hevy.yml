@@ -1,13 +1,24 @@
-name: Sync Hevy Workout Data
+name: SbS Workout Sync
 
 on:
   schedule:
     - cron: '0 23 * * *'  # Runs daily at 11 PM UTC
-  workflow_dispatch:      # Allows manual trigger from GitHub UI
+  workflow_dispatch:      # Allows manual trigger
+    inputs:
+      action:
+        description: 'Choose action to perform'
+        required: true
+        default: 'sync'
+        type: choice
+        options:
+          - sync
+          - next-week
 
 jobs:
-  sync:
+  run-sbs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Check out repository
@@ -23,15 +34,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests python-dotenv
 
-    - name: Run sync script
+    - name: Perform Sync or Advance Week
       env:
         HEVY_API_KEY: ${{ secrets.HEVY_API_KEY }}
-      run: python sbs_logic.py
+      run: |
+        if [ "${{ github.event.inputs.action }}" == "next-week" ]; then
+          python sbs_logic.py --next-week
+        else
+          python sbs_logic.py
+        fi
 
     - name: Commit and push changes
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add state.json
-        git commit -m "Auto-update training maxes from Hevy" || echo "No changes to commit"
+        git commit -m "SbS Auto-Update: ${{ github.event.inputs.action || 'Daily Sync' }}" || echo "No changes to commit"
         git push
