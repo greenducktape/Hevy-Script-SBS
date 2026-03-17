@@ -90,7 +90,7 @@ def update_hevy_routines(state):
                 sets = [{"type": "normal", "reps": reps, "weight_kg": weight} for _ in range(3)]
                 sets.append({"type": "failure", "reps": target, "weight_kg": weight})
             exercises_payload.append({"exercise_template_id": ex_id, "notes": f"W{week} Target: {target}", "sets": sets})
-        payload = {"routine": {"title": title, "folder_id": None, "exercises": exercises_payload}}
+        payload = {"routine": {"title": title, "exercises": exercises_payload}}
         try:
             r = requests.put(f"{HEVY_BASE_URL}/routines/{routine_id}", headers=headers, json=payload)
             if r.status_code != 200:
