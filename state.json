@@ -2,7 +2,8 @@
     "current_week": 1,
     "workouts_per_week": 3,
     "processed_workouts_this_week": [
-        "8766bfd2-0a80-4916-90d8-4bc533611d07"
+        "8766bfd2-0a80-4916-90d8-4bc533611d07",
+        "ccdf3d6f-62ec-499f-ae0d-1253d93f5b3e"
     ],
     "routine_map": {
         "e85acaee-289e-4b1f-8d6a-532c4eb3138f": [
@@ -18,7 +19,11 @@
             "Bench Press",
             "OHP",
             "Bulgarian Split Squat",
-            "Pull-ups"
+            "Pull-ups",
+            "Deadlift (Barbell)",
+            "Overhead Press (Dumbbell)",
+            "Pull Up",
+            "Push Up (Weighted)"
         ],
         "a4384cbb-8f1b-4517-bec2-09fdff80efb1": [
             "Block Pulls",
@@ -55,7 +60,7 @@
             "category": "auxiliary"
         },
         "Bulgarian Split Squat": {
-            "tm": 60.5,
+            "tm": 57.47,
             "target_reps": 15,
             "category": "auxiliary"
         },
@@ -91,6 +96,26 @@
         },
         "Chin Up": {
             "tm": 95.0,
+            "target_reps": 15,
+            "category": "auxiliary"
+        },
+        "Deadlift (Barbell)": {
+            "tm": 142.1,
+            "target_reps": 15,
+            "category": "auxiliary"
+        },
+        "Overhead Press (Dumbbell)": {
+            "tm": 33.67,
+            "target_reps": 15,
+            "category": "auxiliary"
+        },
+        "Pull Up": {
+            "tm": 95.0,
+            "target_reps": 15,
+            "category": "auxiliary"
+        },
+        "Push Up (Weighted)": {
+            "tm": 25.66,
             "target_reps": 15,
             "category": "auxiliary"
         }
